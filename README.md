@@ -1,30 +1,28 @@
 # Gravitational-Dynamics-Simulator
 This program uses 4th-order Runge-Kutta (RK4) integration to solve the coupled system describing multi-body gravitational interactions.
 
-HOW TO USE (if you don't know python):
+# LIBRARIES USED:
+I used numpy and matplotlib.
+
+# HOW TO USE (if you don't know python):
 1. As is, the program will generate a random solar system with a set number of planets. All you would have to do is find an online python editor, paste or upload the program, and then just run it.
-2. If you want to create a specific solar system or change the number of randomly generated planets, find the comment within the program itself that looks like this: #____GRAPHICS____#  and then read the comment that starts with READ ME. Beneath the READ ME portion you should see a section that is blocked off by three lines of hashes like this:
+2. If you want to create a specific solar system or change the number of randomly generated planets, find the comment within the program itself that says "GRAPHICS"  and then read the comment that starts with READ ME. Beneath the READ ME portion you should see a section that is blocked off by three lines of hashes and starts with "1. Initialize the system"
+If you want to change the number of bodies, go to this line of code:
 
-#####
-#####
-#####
-# 1. Initialize the system
-...code...
-#####
-#####
-#####
+num_orbiting = 100 #choose number of planets here
 
-If you want to change the number of bodies, go to this line of code: num_orbiting = 100 #choose number of planets here
-And tweak the number to your liking. If you don't want 100 bodies, make it 4, or 20, or 4000. Whatever your computer can handle.
+and tweak the number to your liking. If you don't want 100 bodies, make it 4, or 20, or 4000. Whatever your computer can handle.
 If you want to set up your own specific system, just copy and paste this prompt into an LLM along with a copy of the code for the program: "I don't know much about python. I would like to create my own custom solar system for the program I have attached. [add a description for what you want your system to look like]. Write the code to initialize this system so I can copy and paste it into the "# 1. Initialize the system" section and get the code running right away. Note that the list of planet objects you generate must be called system in order for it to work."
 
-THE LOGIC FOR THIS PROGRAM: 
+# THE LOGIC FOR THIS PROGRAM: 
 1. The simplest component of the multi-body system is a custom datatype I have called Planet. Planet has an index, a mass, and a state matrix consisting of a position and velocity vector. Ex. Titan = Planet(23, 3, [[1,1], [5,-3]])
 2. The whole system is simply a list of planets. Thus system = [planet_1, planet_2, ...]
 3. Because this program allows for a system of many bodies, it is easier to "glue" the state matrices of all the planets together into one large matrix that represents the state of the whole system. Provided you have a function that takes the derivative of the columns of this matrix, this makes the RK4 integration function extremely straightforward and efficient.
 4. The integration is performed by the RK4_step function. Once the new general state matrix has been calculated, the exact opposite process of gluing the state matrices together is applied and all of the planet objects receive their corresponding new_state matrix. Thus all of the backend computation is done through matrices.
 5. The graphics exculsively rely on the state matrices within each planet object.
 6. As is, the program is designed to generate a random list of planets with varying masses and initial conditions. The range for the random parameters is finite and actually quite limited. You can tweak the program to produce any system you like or just input a system of planets manually.
+7. Newton's law of gravition depends on 1/r^2 where r is the distance between 2 bodies. The problem is that as r -> 0 the force becomes infinitely large. As far as simulations go this can cause bodies to shoot off the screen once they get to close. There is a softening term in the force calculation such that when r -> 0 there is a finite force that acts on each body. This prevents planets from shooting off the screen and is more representative of them having a radius that never allows the center of masses to touch.
 
-MY PROCESS FOR MAKING THIS:
-When I set out to write this program I only intended to make it work for the classic three body problem. The 
+# MY PROCESS FOR MAKING THIS:
+When I set out to write this program I only intended to make it work for the classic three body problem. I started with the Planet datatype and initially just had Planet(index, mass, x, y) for the coordinates. Calculating the net force on each planet with this method was pretty easy but when it came time to set up the RK4_step function I realized an issue. RK4 requires you to sample the slope at the midpoints but to do this accurately in a coupled system you have to shift ALL of the planets accordingly. dealing with this in terms of the planet objects seemed very messy so I was stumped for a little bit. I then realized that it would be cleaner if I got rid of x and y in the Planet object and replaced it with a matrix that contained its position and velocity vectors. I then realized that since the system is coupled together, any time you sample the slope at a midpoint you are performing the same step with respect to time for every single planet. I realized that if I glued the state matrices of all the planets together the RK4 step would be drastically simplified. Mathematically the operation of how this worked was very simple. Your matrix columns are [r1  v1  r2  v2  etc] and every step you take is just the derivative of state times an increment of time. The derivative matrix is just [v1  a1  v2  a2  etc.] where the accelerations are derived from Newton's law of gravitation (positions and masses). The challenge with making the RK4_step simple was making a derivative function that would take ANY state matrix and compute its derivative. Getting the velocity columns was simple but using the position columns of the state input and the masses (that aren't even part of the matrix) to correctly account for the acceleration was a challenge. To that end I asked Gemini to deal with it because I didn't feel like spending hours delving into numpy documentation to produce a solution that is likely to be suboptimal. Thus Gemini created the acc_matrix function.
+The above paragraph accounts for the integration section of the code. I did not feel like spending hours on the graphics so I asked Gemini to create the graphics portion of the code.
