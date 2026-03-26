@@ -1,4 +1,4 @@
-![Uploading system.gif…]()
+![system](https://github.com/user-attachments/assets/0e88f9ff-34a8-4321-972e-4e6f785f9638)
 # Gravitational-Dynamics-Simulator
 This program uses 4th-order Runge-Kutta (RK4) integration to solve the coupled system describing multi-body gravitational interactions.
 
